@@ -7,86 +7,58 @@ description: Use when reading, searching, creating, updating, or organizing docu
 
 CLI wrapper for Outline wiki REST API. Compact output by default for token efficiency.
 
-## Usage
-
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/outline/scripts/outline_api.py <endpoint> [--param=value ...] [--raw] [--text-file=path]
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/outline/scripts/outline_api.py <command> [--param=value ...] [--raw] [--text-file=path]
 ```
 
-- `--raw` — full JSON response (skip filtering)
-- `--text-file=path` — read `text` param from file (for document updates with long content)
-
-## Quick Reference
-
-### Documents
-
-| Endpoint | Required params | Description |
-|---|---|---|
-| `documents.info` | `--id` | Get document (returns id, title, text) |
-| `documents.list` | | List documents. `--collectionId`, `--limit`, `--offset` |
-| `documents.search` | `--query` | Full-text search. `--collectionId`, `--limit` |
-| `documents.search_titles` | `--query` | Title-only search (lightweight) |
-| `documents.create` | `--title` `--collectionId` | Create document. `--text`, `--parentDocumentId`, `--publish` |
-| `documents.update` | `--id` | Update document. `--title`, `--text`, `--text-file` |
-| `documents.delete` | `--id` | Trash document. `--permanent=true` for hard delete |
-| `documents.move` | `--id` | Move document. `--collectionId`, `--parentDocumentId` |
-| `documents.archive` | `--id` | Archive document |
-| `documents.restore` | `--id` | Restore archived/trashed document |
-| `documents.duplicate` | `--id` | Clone document. `--recursive=true` for children |
-| `documents.documents` | `--id` | Get child document tree (NavigationNode) |
-
-### Collections
-
-| Endpoint | Required params | Description |
-|---|---|---|
-| `collections.info` | `--id` | Get collection details |
-| `collections.list` | | List all collections |
-| `collections.create` | `--name` | Create collection. `--description`, `--permission` |
-| `collections.update` | `--id` | Update collection. `--name`, `--description` |
-| `collections.delete` | `--id` | Delete collection |
-| `collections.documents` | `--id` | Get document tree for collection |
-
-### Comments
-
-| Endpoint | Required params | Description |
-|---|---|---|
-| `comments.create` | `--documentId` `--text` | Add comment. `--parentCommentId` for replies |
-| `comments.list` | | List comments. `--documentId`, `--collectionId`, `--limit` |
+`--raw` returns full JSON. `--text-file=path` reads `text` param from file. `--old-file`/`--new-file` for replace with special chars.
 
 ## High-Level Commands
 
-Operate on documents without loading full text into context (fetch→modify→update internally).
+Fetch→modify→update internally. Document text never enters context.
 
-| Command | Required params | Description |
-|---|---|---|
-| `replace` | `--id` `--old` `--new` | String replace in document. `--old-file`/`--new-file` for text with quotes/special chars |
-| `append` | `--id` `--text` | Append to end of document. Supports `--text-file` |
-| `prepend` | `--id` `--text` | Insert after first heading. Supports `--text-file` |
-| `section-read` | `--id` `--heading` | Read one section by heading (substring match) |
-| `section-delete` | `--id` `--heading` | Delete section by heading (substring match) |
+<commands type="high-level">
+<cmd name="replace" required="--id --old --new">String replace. Use --old-file/--new-file for text with quotes or newlines</cmd>
+<cmd name="append" required="--id --text">Append to end. Supports --text-file</cmd>
+<cmd name="prepend" required="--id --text">Insert after first heading. Supports --text-file</cmd>
+<cmd name="section-read" required="--id --heading">Read one section by heading substring</cmd>
+<cmd name="section-delete" required="--id --heading">Delete section by heading substring</cmd>
+</commands>
 
-## Compact Output
+## API Endpoints
 
-Default output strips metadata for token savings. Use `--raw` for full response.
+<commands type="documents">
+<cmd name="documents.info" required="--id">Get document (compact: id, title, text)</cmd>
+<cmd name="documents.list" optional="--collectionId --limit --offset">List documents (compact: id, title, updatedAt)</cmd>
+<cmd name="documents.search" required="--query" optional="--collectionId --limit">Full-text search (compact: ranking, context, document.id/title)</cmd>
+<cmd name="documents.search_titles" required="--query" optional="--collectionId --limit">Title-only search (lightweight)</cmd>
+<cmd name="documents.create" required="--title --collectionId" optional="--text --parentDocumentId --publish --text-file">Create document</cmd>
+<cmd name="documents.update" required="--id" optional="--title --text --text-file">Update document</cmd>
+<cmd name="documents.delete" required="--id" optional="--permanent=true">Trash (or hard delete)</cmd>
+<cmd name="documents.move" required="--id" optional="--collectionId --parentDocumentId">Move document</cmd>
+<cmd name="documents.archive" required="--id">Archive</cmd>
+<cmd name="documents.restore" required="--id">Restore archived/trashed</cmd>
+<cmd name="documents.duplicate" required="--id" optional="--recursive=true">Clone document</cmd>
+<cmd name="documents.documents" required="--id">Child document tree (compact: id, title, url, children)</cmd>
+</commands>
 
-| Endpoint | Compact fields |
-|---|---|
-| `documents.info` | id, title, text |
-| `documents.list` | id, title, updatedAt |
-| `documents.search` | ranking, context, document.id, document.title |
-| `collections.list` | id, name |
-| Tree endpoints | id, title, url, children (recursive) |
+<commands type="collections">
+<cmd name="collections.info" required="--id">Get collection details</cmd>
+<cmd name="collections.list">List all collections (compact: id, name)</cmd>
+<cmd name="collections.create" required="--name" optional="--description --permission">Create collection</cmd>
+<cmd name="collections.update" required="--id" optional="--name --description">Update collection</cmd>
+<cmd name="collections.delete" required="--id">Delete collection</cmd>
+<cmd name="collections.documents" required="--id">Document tree (compact: id, title, url, children)</cmd>
+</commands>
+
+<commands type="comments">
+<cmd name="comments.create" required="--documentId --text" optional="--parentCommentId">Add comment</cmd>
+<cmd name="comments.list" optional="--documentId --collectionId --limit">List comments</cmd>
+</commands>
 
 ## Environment
 
-Required in `~/.claude/settings.json` → `env`:
-
-```json
-{
-  "OUTLINE_API_KEY": "ol_api_...",
-  "OUTLINE_API_URL": "https://your-outline.example/api",
-  "OUTLINE_SSL_VERIFY": "false"
-}
-```
-
-`OUTLINE_SSL_VERIFY=false` disables cert verification for self-hosted instances.
+Set in `~/.claude/settings.json` → `env`:
+- `OUTLINE_API_KEY` (required): API token
+- `OUTLINE_API_URL` (required): Base URL, e.g. `https://outline.example/api`
+- `OUTLINE_SSL_VERIFY`: Set `false` for self-signed certs
