@@ -53,6 +53,18 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/outline/scripts/outline_api.py <endpoint> [
 | `comments.create` | `--documentId` `--text` | Add comment. `--parentCommentId` for replies |
 | `comments.list` | | List comments. `--documentId`, `--collectionId`, `--limit` |
 
+## High-Level Commands
+
+Operate on documents without loading full text into context (fetch→modify→update internally).
+
+| Command | Required params | Description |
+|---|---|---|
+| `replace` | `--id` `--old` `--new` | String replace in document. `--old-file`/`--new-file` for text with quotes/special chars |
+| `append` | `--id` `--text` | Append to end of document. Supports `--text-file` |
+| `prepend` | `--id` `--text` | Insert after first heading. Supports `--text-file` |
+| `section-read` | `--id` `--heading` | Read one section by heading (substring match) |
+| `section-delete` | `--id` `--heading` | Delete section by heading (substring match) |
+
 ## Compact Output
 
 Default output strips metadata for token savings. Use `--raw` for full response.
