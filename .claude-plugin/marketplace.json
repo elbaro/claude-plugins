@@ -1,9 +1,9 @@
 {
-  "name": "claude-outline-marketplace",
+  "name": "claude-plugins",
   "plugins": [
     {
       "name": "claude-outline",
-      "source": ".",
+      "source": "./plugins/claude-outline",
       "description": "Outline wiki integration for Claude Code — documents, collections, comments via REST API",
       "version": "0.1.0"
     }
